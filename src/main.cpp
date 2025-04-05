@@ -3,6 +3,8 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
+#include "DHT.h"
+#include "Adafruit_Sensor.h"
 #include "Ultrasonic.h"
 #include "PubSubClient.h"
 #include "env.h"
@@ -35,8 +37,13 @@
 
 //!---------------------       Definições de variáveis     ---------------------
 
+//ultrasonic
 bool detected = false;
 unsigned long lastDetection = 0;
+
+//dht
+unsigned long lastReading = 0;
+
 
 //!---------------------       Cabeçalho de Funções     ---------------------
 
@@ -53,12 +60,13 @@ WiFiClientSecure client;
 PubSubClient mqttClient(client);
 
 Ultrasonic ultrasonic(ULTRA_TRIGG,ULTRA_ECHO);
+DHT dht(DHT_PIN, DHT11);
 
 
 
-//                 Values set in /include/env.h
-#define NODE_ID "NODE_1_"
 
+
+//                 Values set in /include/env.h 
 const char* mqtt_broker = MQTT_BROKER_CONN;
 const char* mqtt_user = MQTT_USER_CONN;
 const char* mqtt_password = MQTT_PASSWORD_CONN;
@@ -66,6 +74,8 @@ const int mqtt_port = MQTT_PORT_CONN;
 
 const char* wifi_ssid = WIFI_CONN_SSID;
 const char* wifi_password = WIFI_CONN_PASSWORD;
+
+String NODE_ID = "NODE_1_";
 //
 
 //!---------------------       Definição dos tópicos        ---------------------
@@ -96,6 +106,9 @@ void setup() {
   digitalWrite(FORWARD_DIRECTION_PIN, LOW);
   digitalWrite(BACKWARD_DIRECTION_PIN, LOW);
 
+  //DHT11
+  dht.begin();
+
   // Status LED
   ledcSetup(PWM_LED_R, PWM_FREQ, PWM_RESOLUTION);
   ledcSetup(PWM_LED_G, PWM_FREQ, PWM_RESOLUTION);
@@ -123,8 +136,9 @@ void loop() {
   }
   mqttClient.loop();
 
+  unsigned long currentTime = millis();
 
-  //TODO: Leitura do sensor de luminosidade e publicação no ferrorama/station/luminanceStatus
+  //TODO: Read luminance sensor data and publish it to the luminance topic
   byte luminanceValue = map(analogRead(LDR_PIN),0,4095,0,100);
   if (luminanceValue < 80){
     mqttClient.publish(topicLuminanceSensor,String("1").c_str());
@@ -132,13 +146,20 @@ void loop() {
     mqttClient.publish(topicLuminanceSensor, String("0").c_str());
   }
 
-  //TODO: Leitura do sensor de temp/umid e publicação nos topicos 
+  //TODO: Read temperatura/humidity sensor data and publish it to the temperatura/humidity topic 
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
 
+  if ((currentTime - lastReading > 2000) && (!isnan(temperature) || !isnan(humidity))) {
+    lastReading = currentTime;
+    mqttClient.publish(topicTemperatureSensor, String(temperature).c_str());
+    mqttClient.publish(topicHumiditySensor, String(humidity).c_str());
+  }
 
-  //TODO: Leitura do sensor de presença e publicação nos topicos
+  //TODO: Read distance sensor data and publish it to the presence topic
   long microsec = ultrasonic.timing();
   float distance = ultrasonic.convert(microsec,Ultrasonic::CM);
-  unsigned long currentTime = millis();
+  
 
   if(distance < 10 && detected == false && (currentTime - lastDetection >= 3000)){
     mqttClient.publish(topicPresenceSensor, String("1").c_str());
