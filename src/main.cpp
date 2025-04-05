@@ -25,7 +25,10 @@
 #define PWM_RESOLUTION 8
 
 
-#define LUMINANCE_SENSOR 10
+#define LDR_PIN 10
+#define DHT_PIN 11
+#define ULTRA_ECHO 0
+#define ULTRA_TRIGG 1
 
 
 
