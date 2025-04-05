@@ -64,7 +64,7 @@ const char* wifi_password = WIFI_CONN_PASSWORD;
 const char* topicPresenceSensor = "ferrorama/station/presence";
 const char* topicTemperatureSensor = "ferrorama/station/temperature";
 const char* topicHumiditySensor = "ferrorama/station/humidity";
-const char* topicLuminanceSensor = "ferrorama/station/luminance";
+const char* topicLuminanceSensor = "ferrorama/station/luminanceStatus";
 const char* topicTrainSpeed = "ferrorama/train/speed";
 
 
@@ -114,7 +114,17 @@ void loop() {
   mqttClient.loop();
 
 
-  //TODO: Leitura do sensor de luminosidade e publicação no ferrorama/station/status
+  //TODO: Leitura do sensor de luminosidade e publicação no ferrorama/station/luminanceStatus
+  byte luminanceValue = map(analogRead(LDR_PIN),0,4095,0,100);
+  if (luminanceValue < 80){
+    mqttClient.publish(topicLuminanceSensor,String("1").c_str());
+  }else{
+    mqttClient.publish(topicLuminanceSensor, String("0").c_str());
+  }
+
+
+
+
 
 
 }
