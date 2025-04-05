@@ -30,7 +30,7 @@
 #define ULTRA_ECHO 0
 #define ULTRA_TRIGG 1
 
-
+#define LEDPIN 30
 
 //!---------------------       Cabeçalho de Funções     ---------------------
 
@@ -59,16 +59,13 @@ const char* wifi_password = WIFI_CONN_PASSWORD;
 //
 
 //!---------------------       Definição dos tópicos        ---------------------
-//Sensors
+
+//Publish
 const char* topicPresenceSensor = "ferrorama/station/presence";
 const char* topicTemperatureSensor = "ferrorama/station/temperature";
 const char* topicHumiditySensor = "ferrorama/station/humidity";
 const char* topicLuminanceSensor = "ferrorama/station/luminance";
-
-//Actuators
 const char* topicTrainSpeed = "ferrorama/train/speed";
-const char* topicPresenceSensor = "ferrorama/station/presence";
-const char* topicLuminanceStatus = "ferrorama/station/luminanceStatus";
 
 
 //!---------------------       Loops Principais        ---------------------
@@ -98,6 +95,10 @@ void setup() {
   ledcAttachPin(STATUS_LED_G, PWM_LED_G);
   ledcAttachPin(STATUS_LED_B, PWM_LED_B);
   turnOffLEDs();
+
+
+
+  nodeIlumination(0);
   delay(2000);
 }
 
@@ -114,7 +115,7 @@ void loop() {
 
 
   //TODO: Leitura do sensor de luminosidade e publicação no ferrorama/station/status
-  
+
 
 }
 
@@ -157,10 +158,10 @@ void connectToMQTT() {
       Serial.println("Conectado ao Broker MQTT");
 
 
-      mqttClient.subscribe(topicLuminanceStatus);
+      mqttClient.subscribe(topicLuminanceSensor);
       mqttClient.setCallback(callback);
-      Serial.print("Inscrito nos tópicos: ");
-      Serial.print(topicLuminanceStatus);
+      Serial.print("Inscrito no tópico: ");
+      Serial.print(topicLuminanceSensor);
       turnOffLEDs();
     }
     else {
@@ -221,22 +222,31 @@ void handleError() {
 
 void callback(char* topic, byte* payload, unsigned int length) {
   String message = "";
-
+  bool error = false;
   for (int i = 0; i < length; i++) {
     char c = (char)payload[i];
     if (!isDigit(c)) {
       handleError();
+      error = true;
       return;
     }
     message += c;
   }
 
-  if (message == "1") {
-    // TODO: Ligar LED Estação
-  } else if (message == "0") {
-    // TODO: Desligar LED Estação
-  } else {
-    handleError();
-    statusLED(3);
+  if (!error) {
+    if (message == "1") {
+      nodeIlumination(1); //Acende os leds
+    }
+    else if (message == "0") {
+      nodeIlumination(0); //Apaga os leds
+    }
+    else {
+      handleError();
+      statusLED(3);
+    }
   }
+}
+
+void nodeIlumination(bool status) {
+  digitalWrite(LEDPIN, status);
 }
