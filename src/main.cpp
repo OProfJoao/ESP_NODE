@@ -24,6 +24,11 @@
 #define PWM_FREQ 500
 #define PWM_RESOLUTION 8
 
+
+#define LUMINANCE_SENSOR 10
+
+
+
 //!---------------------       Cabeçalho de Funções     ---------------------
 
 void callback(char* topic, byte* message, unsigned int length);
@@ -103,6 +108,11 @@ void loop() {
     connectToMQTT();
   }
   mqttClient.loop();
+
+
+  //TODO: Leitura do sensor de luminosidade e publicação no ferrorama/station/status
+  
+
 }
 
 //!---------------------       Funções extras        ---------------------
@@ -218,33 +228,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += c;
   }
 
-  bool luminanceStatus = (message == "1");
-  if (luminanceStatus) {
-    //TODO: Ligar LED Estação
-  }
-  else if (!luminanceStatus) {
-    //TODO: Desligar LED Estação
-  }
-  else {
+  if (message == "1") {
+    // TODO: Ligar LED Estação
+  } else if (message == "0") {
+    // TODO: Desligar LED Estação
+  } else {
     handleError();
     statusLED(3);
   }
-
-  // if (speed > 0 && speed < 255) {
-  //   if (speed != currentSpeed) {
-  //     currentSpeed = speed;
-  //     statusLED(3);
-  //     ledcWrite(PWM_FORWARD, speed);
-  //     Serial.println(String("Velocidade alterada para: ") + speed);
-  //   }
-  // }
-  // else if (speed == 0) {
-  //   Serial.println(String("Velocidade alterada para: ") + speed);
-  //   ledcWrite(PWM_FORWARD, speed);
-  //   turnOffLEDs();
-  // }
-  // else {
-  //   handleError();
-  //   statusLED(3);
-  // }
 }
