@@ -3,6 +3,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
+#include "Ultrasonic.h"
 #include "PubSubClient.h"
 #include "env.h"
 
@@ -32,6 +33,11 @@
 
 #define LEDPIN 30
 
+//!---------------------       Definições de variáveis     ---------------------
+
+bool detected = false;
+unsigned long lastDetection = 0;
+
 //!---------------------       Cabeçalho de Funções     ---------------------
 
 void callback(char* topic, byte* message, unsigned int length);
@@ -46,9 +52,13 @@ void handleError();
 WiFiClientSecure client;
 PubSubClient mqttClient(client);
 
-#define NODE_ID "NODE_1_"
+Ultrasonic ultrasonic(ULTRA_TRIGG,ULTRA_ECHO);
+
+
 
 //                 Values set in /include/env.h
+#define NODE_ID "NODE_1_"
+
 const char* mqtt_broker = MQTT_BROKER_CONN;
 const char* mqtt_user = MQTT_USER_CONN;
 const char* mqtt_password = MQTT_PASSWORD_CONN;
@@ -125,8 +135,21 @@ void loop() {
   //TODO: Leitura do sensor de temp/umid e publicação nos topicos 
 
 
-  //TODO: Leitura do sensor de presença e publicação nos topicos 
-  
+  //TODO: Leitura do sensor de presença e publicação nos topicos
+  long microsec = ultrasonic.timing();
+  float distance = ultrasonic.convert(microsec,Ultrasonic::CM);
+  unsigned long currentTime = millis();
+
+  if(distance < 10 && detected == false && (currentTime - lastDetection >= 3000)){
+    mqttClient.publish(topicPresenceSensor, String("1").c_str());
+    detected = true;
+    lastDetection = currentTime;
+  }
+  if (distance > 10 && detected == true && (currentTime - lastDetection >= 3000)) {
+    detected = false;
+    lastDetection = currentTime;
+  }
+
 
 }
 
