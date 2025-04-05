@@ -204,7 +204,6 @@ void handleError() {
     delay(100);
   }
   turnOffLEDs();
-  mqttClient.publish("esp_motor/status", "Valor invalido");
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
