@@ -113,8 +113,6 @@ void setup() {
   ledcAttachPin(STATUS_LED_B_PIN, PWM_LED_B);
   turnOffLEDs();
 
-
-
   nodeIlumination(0);
   delay(2000);
 }
