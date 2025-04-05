@@ -1,4 +1,5 @@
 //!---------------------       Inclusões de bibliotecas ---------------------
+ 
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -10,30 +11,36 @@
 #include "env.h"
 
 //!---------------------       Definição dos pinos      ---------------------
-#define FORWARD_DIRECTION_PIN 32   //* Forward Direction
-#define BACKWARD_DIRECTION_PIN 33  //* Backward Direction
 
-#define STATUS_LED_R 25
-#define STATUS_LED_G 26
-#define STATUS_LED_B 27
+#define PWM_FREQ 500
+#define PWM_RESOLUTION 8
+
+#define FORWARD_DIRECTION_PIN 32
+#define BACKWARD_DIRECTION_PIN 33 
 
 #define PWM_FORWARD 0
 #define PWM_BACKWARD 1
+
+
+
+#define STATUS_LED_R_PIN 25
+#define STATUS_LED_G_PIN 26
+#define STATUS_LED_B_PIN 27
 
 #define PWM_LED_R 2
 #define PWM_LED_G 3
 #define PWM_LED_B 4
 
-#define PWM_FREQ 500
-#define PWM_RESOLUTION 8
 
 
-#define LDR_PIN 10
+//TODO: Configurar pinos corretos
+#define LDR_PIN 10      
 #define DHT_PIN 11
 #define ULTRA_ECHO 0
 #define ULTRA_TRIGG 1
 
 #define LEDPIN 30
+
 
 //!---------------------       Definições de variáveis     ---------------------
 
@@ -62,21 +69,8 @@ PubSubClient mqttClient(client);
 Ultrasonic ultrasonic(ULTRA_TRIGG,ULTRA_ECHO);
 DHT dht(DHT_PIN, DHT11);
 
-
-
-
-
-//                 Values set in /include/env.h 
-const char* mqtt_broker = MQTT_BROKER_CONN;
-const char* mqtt_user = MQTT_USER_CONN;
-const char* mqtt_password = MQTT_PASSWORD_CONN;
-const int mqtt_port = MQTT_PORT_CONN;
-
-const char* wifi_ssid = WIFI_CONN_SSID;
-const char* wifi_password = WIFI_CONN_PASSWORD;
-
 String NODE_ID = "NODE_1_";
-//
+
 
 //!---------------------       Definição dos tópicos        ---------------------
 
@@ -114,9 +108,9 @@ void setup() {
   ledcSetup(PWM_LED_G, PWM_FREQ, PWM_RESOLUTION);
   ledcSetup(PWM_LED_B, PWM_FREQ, PWM_RESOLUTION);
 
-  ledcAttachPin(STATUS_LED_R, PWM_LED_R);
-  ledcAttachPin(STATUS_LED_G, PWM_LED_G);
-  ledcAttachPin(STATUS_LED_B, PWM_LED_B);
+  ledcAttachPin(STATUS_LED_R_PIN, PWM_LED_R);
+  ledcAttachPin(STATUS_LED_G_PIN, PWM_LED_G);
+  ledcAttachPin(STATUS_LED_B_PIN, PWM_LED_B);
   turnOffLEDs();
 
 
@@ -185,7 +179,7 @@ void setLEDColor(byte r, byte g, byte b) {
 void connectToWiFi() {
   statusLED(1);
   delay(500);
-  WiFi.begin(wifi_ssid, wifi_password);
+  WiFi.begin(WIFI_CONN_SSID, WIFI_CONN_PASSWORD);
   Serial.print("Conectando ao WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -203,13 +197,13 @@ void connectToWiFi() {
 void connectToMQTT() {
   statusLED(2);
   delay(500);
-  mqttClient.setServer(mqtt_broker, mqtt_port);
+  mqttClient.setServer(MQTT_BROKER_CONN, MQTT_PORT_CONN);
 
   while (!mqttClient.connected()) {
     Serial.print("Conectando ao Broker MQTT...");
     String mqtt_id = NODE_ID;
     mqtt_id += String(random(0xffff), HEX);
-    if (mqttClient.connect(mqtt_id.c_str(), mqtt_user, mqtt_password)) {
+    if (mqttClient.connect(mqtt_id.c_str(), MQTT_USER_CONN, MQTT_PASSWORD_CONN)) {
       Serial.println("Conectado ao Broker MQTT");
 
 
