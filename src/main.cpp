@@ -59,9 +59,9 @@ const char* topicLuminanceSensor = "ferrorama/station/luminance";
 
 //Actuators
 const char* topicTrainSpeed = "ferrorama/train/speed";
+const char* topicPresenceSensor = "ferrorama/station/presence";
+const char* topicLuminanceStatus = "ferrorama/station/luminanceStatus";
 
-
-int currentSpeed = 0;
 
 //!---------------------       Loops Principais        ---------------------
 
@@ -141,12 +141,13 @@ void connectToMQTT() {
     String mqtt_id = NODE_ID;
     mqtt_id += String(random(0xffff), HEX);
     if (mqttClient.connect(mqtt_id.c_str(), mqtt_user, mqtt_password)) {
-      mqttClient.subscribe(topic);
-      mqttClient.setCallback(callback);
-
       Serial.println("Conectado ao Broker MQTT");
-      Serial.print("Inscrito no tópico: ");
-      Serial.print(topic);
+
+
+      mqttClient.subscribe(topicLuminanceStatus);
+      mqttClient.setCallback(callback);
+      Serial.print("Inscrito nos tópicos: ");
+      Serial.print(topicLuminanceStatus);
       turnOffLEDs();
     }
     else {
@@ -218,22 +219,33 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += c;
   }
 
-  int speed = message.toInt();
-  if (speed > 0 && speed < 255) {
-    if (speed != currentSpeed) {
-      currentSpeed = speed;
-      statusLED(3);
-      ledcWrite(PWM_FORWARD, speed);
-      Serial.println(String("Velocidade alterada para: ") + speed);
-    }
+  bool luminanceStatus = (message == "1");
+  if (luminanceStatus) {
+    //TODO: Ligar LED Estação
   }
-  else if (speed == 0) {
-    Serial.println(String("Velocidade alterada para: ") + speed);
-    ledcWrite(PWM_FORWARD, speed);
-    turnOffLEDs();
+  else if (!luminanceStatus) {
+    //TODO: Desligar LED Estação
   }
   else {
     handleError();
     statusLED(3);
   }
+
+  // if (speed > 0 && speed < 255) {
+  //   if (speed != currentSpeed) {
+  //     currentSpeed = speed;
+  //     statusLED(3);
+  //     ledcWrite(PWM_FORWARD, speed);
+  //     Serial.println(String("Velocidade alterada para: ") + speed);
+  //   }
+  // }
+  // else if (speed == 0) {
+  //   Serial.println(String("Velocidade alterada para: ") + speed);
+  //   ledcWrite(PWM_FORWARD, speed);
+  //   turnOffLEDs();
+  // }
+  // else {
+  //   handleError();
+  //   statusLED(3);
+  // }
 }
