@@ -122,10 +122,11 @@ void loop() {
     mqttClient.publish(topicLuminanceSensor, String("0").c_str());
   }
 
+  //TODO: Leitura do sensor de temp/umid e publicação nos topicos 
 
 
-
-
+  //TODO: Leitura do sensor de presença e publicação nos topicos 
+  
 
 }
 
